@@ -6,20 +6,42 @@ r mode:
 The loop:
 '''
 
+import sys
+sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
+
 import cv2
 import numpy as np
 import glob
 import time
 import matplotlib.pyplot as plt
 
+
 class IV_UI():
 
     def __init__(self):
-        self.Folder = '/home/mgs/PycharmProjects/IV_Vessel/IV_Label/'
+        self.Folder = '/home/mgs/PycharmProjects/IV_Label/'
         self.imgpath = self.Folder + 'labelread/1.jpg'
         self.labelread = self.Folder + 'labelread/'
         self.labelsave = self.Folder + 'labelsave/'
         self.labelsavenpy = self.Folder + 'labelsavenpy/'
+        self.imgmask = self.Folder + 'img_mask/'
+
+    def Pts2Mask(self, img, xy_coord):
+
+        xy_coord_use = xy_coord[1:,:]
+        print(img)
+        print(img.shape)
+
+        if len(img.shape) == 2:
+            img_grey = img
+        else:
+            img_grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        img_mask = np.zeros((img_grey.shape))
+        cv2.fillPoly(img_mask, pts = [np.int32(xy_coord_use)], color = (255, 255, 255))
+        cv2.imshow('masked image', img_mask)
+        cv2.waitKey()
+        cv2.destroyAllWindows()
+        return img_mask
 
     def PtsFromRec(self):
 
@@ -204,6 +226,9 @@ class IV_UI():
                 EDGE_use = np.zeros((1, 2))
                 for item in P_res:
                     EDGE_use = np.vstack([EDGE_use, item])
+
+                img_mask = self.Pts2Mask(img, EDGE_use)
+                cv2.imwrite(self.imgmask + str(i + 1) + '.jpg', img_mask)
                 np.save(self.labelsavenpy + str(i + 1) + '.npy', EDGE_use)
 
                 # Show the feature on the image for checking
@@ -224,7 +249,7 @@ class IV_UI():
 
             # Show the image for checking
             plt.imshow(img, cmap = 'gray')
-            filename_save = self.labelsave + 'label_' + str(count) + '.jpg'
+            filename_save = self.labelsave + 'label_' + str(count + 1) + '.jpg'
             cv2.imwrite(filename_save, img)
             count += 1
             plt.show()
@@ -233,5 +258,22 @@ class IV_UI():
         np.save(self.labelsave + 'CEN_invivo.npy', RES)
 
 if __name__ == "__main__":
+
     test = IV_UI()
     test.LABEL()
+
+    # Read the image
+    # img = cv2.imread("labelread/1.jpg")
+    # xy_coord = np.load("labelsavenpy/1.npy")
+    # test.Pts2Mask(img, xy_coord)
+
+
+
+
+
+
+
+
+
+
+
